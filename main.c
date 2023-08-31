@@ -18,7 +18,7 @@
 #define buttonRecordPositionPin1 PC1    // arduino: 36
 #define buttonRecordPositionPin2 PC2    // arduino: 35
 #define buttonRecordPositionPin3 PC3    // arduino: 34
-#define buttonRecordPositionPin4 PC4    // arduino: 33
+#define buttonRecordPositionPin4 PC4    // arduino: 33  
 #define buttonRecordPositionPin5 PC5    // arduino: 32
 #define buttonManualPin          PC6    // arduino: 31
 #define buttonExecuteModePin     PC7    // arduino: 30
@@ -131,7 +131,7 @@ int main() {
     
     uint16_t data_array_s[2] = {0, 0}; // array genérico para leitura
     uint16_t data_array_s1[2] = {0, 0};
-    // uint16_t data_array_s2[2] = {0, 0};
+    uint16_t data_array_s2[2] = {0, 0};
     // uint16_t data_array_s3[2] = {0, 0};
     // uint16_t data_array_s4[2] = {0, 0};
     // uint16_t data_array_s5[2] = {0, 0};
@@ -228,14 +228,14 @@ int main() {
                     lastAddress += sizeof(data_array_s1); 
                 }
 
-                if( !tst_bit(PINC, buttonRecordPositionPin0) ) {
-                    while( !tst_bit(PINC, buttonRecordPositionPin0) );
+                if( !tst_bit(PINC, buttonRecordPositionPin1) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin1) );
                     _delay_ms(10);
 
                     cpl_bit(PORTB, PB7);
-                    data_array_s1[0] = SERVO_1;
-                    data_array_s1[1] = mappedValue1;
-                    eeprom_write_block(data_array_s1, (void *)lastAddress, sizeof(data_array_s1));
+                    data_array_s2[0] = SERVO_2;
+                    data_array_s2[1] = mappedValue2;
+                    eeprom_write_block(data_array_s2, (void *)lastAddress, sizeof(data_array_s2));
                     eeprom_busy_wait(); // espera até que todas as operações de gravação anteriores na EEPROM sejam concluídas antes de continuar a execução.                                          
                     
                     // limita em até 5 gravações
@@ -244,7 +244,7 @@ int main() {
                         lastAddress = 0;
 
                     // Calcula o próximo endereço disponível
-                    lastAddress += sizeof(data_array_s1); 
+                    lastAddress += sizeof(data_array_s2); 
                 }
                 
                 _delay_ms(50);
@@ -267,8 +267,6 @@ int main() {
                 }
                 
                 lastPosition1 = data_array_s[1];
-
-                _delay_ms(800);
                 
                 if(lastAddress >= 16) 
                     lastAddress = 0;
