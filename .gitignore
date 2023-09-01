@@ -1,2 +1,2 @@
-main.bin
-main.hex
+*.bin
+*.hex

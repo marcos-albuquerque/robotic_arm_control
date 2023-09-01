@@ -14,15 +14,14 @@
 #define BOTAO PB4
 
 // Botões
-#define buttonRecordPositionPin0 PC0    // arduino: 37
-#define buttonRecordPositionPin1 PC1    // arduino: 36
-#define buttonRecordPositionPin2 PC2    // arduino: 35
-#define buttonRecordPositionPin3 PC3    // arduino: 34
-#define buttonRecordPositionPin4 PC4    // arduino: 33  
-#define buttonRecordPositionPin5 PC5    // arduino: 32
+#define buttonRecordPositionPin1 PC0    // arduino: 37
+#define buttonRecordPositionPin2 PC1    // arduino: 36
+#define buttonRecordPositionPin3 PC2    // arduino: 35
+#define buttonRecordPositionPin4 PC3    // arduino: 34
+#define buttonRecordPositionPin5 PC4    // arduino: 33  
+#define buttonRecordPositionPin6 PC5    // arduino: 32
 #define buttonManualPin          PC6    // arduino: 31
 #define buttonExecuteModePin     PC7    // arduino: 30
-
 
 // Enumerações para identificar os servos
 enum ServoIndex {
@@ -34,9 +33,7 @@ enum ServoIndex {
     SERVO_6
 };
 
-
 uint8_t currentMode = 1; // Modo atual 
-
 
 // Função para iniciar o modo de leitura analógica
 void ADC_Init() {
@@ -58,7 +55,7 @@ uint16_t ADC_Read(uint8_t channel) {
     return ADC;
 }
 
-// Função para configurar um timer para PWM
+// Função para configurar um timer (16-bits) para PWM
 void setupPWMTimer(uint8_t timerNumber, uint16_t pulseWidth) {
     switch (timerNumber) {
         case 3:
@@ -127,15 +124,22 @@ int main() {
     uint16_t mappedValue1, mappedValue2, mappedValue3, mappedValue4, mappedValue5, mappedValue6;
 
     uint16_t lastAddress = 0;           // inicializa último enderoço disponível
-    uint16_t lastPosition1 = 3000;         // inicializa a última posição do servo1
+    // posições atuais dos servos
+    uint16_t currentPosition1 = OCR3A;
+    uint16_t currentPosition2 = OCR3B;
+    uint16_t currentPosition3 = OCR4A;
+    uint16_t currentPosition4 = OCR4B;
+    uint16_t currentPosition5 = OCR5A;
+    uint16_t currentPosition6 = OCR5B;
     
-    uint16_t data_array_s[2] = {0, 0}; // array genérico para leitura
-    uint16_t data_array_s1[2] = {0, 0};
-    uint16_t data_array_s2[2] = {0, 0};
-    // uint16_t data_array_s3[2] = {0, 0};
-    // uint16_t data_array_s4[2] = {0, 0};
-    // uint16_t data_array_s5[2] = {0, 0};
-    // uint16_t data_array_s6[2] = {0, 0};
+    uint16_t data_array_s[2]  = {0, 0}; // array genérico para leitura
+    // arrays de identificação e posição dos servos
+    uint16_t data_array_s1[2] = {SERVO_1, 0};
+    uint16_t data_array_s2[2] = {SERVO_2, 0};
+    uint16_t data_array_s3[2] = {SERVO_3, 0};
+    uint16_t data_array_s4[2] = {SERVO_4, 0};
+    uint16_t data_array_s5[2] = {SERVO_5, 0};
+    uint16_t data_array_s6[2] = {SERVO_6, 0};
 
 
     // ---------- Analog Read Init -------------
@@ -209,12 +213,11 @@ int main() {
                 set_servo_position(4, mappedValue5);        
                 set_servo_position(5, mappedValue6); 
 
-                if( !tst_bit(PINC, buttonRecordPositionPin0) ) {
-                    while( !tst_bit(PINC, buttonRecordPositionPin0) );
+                if( !tst_bit(PINC, buttonRecordPositionPin1) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin1) );
                     _delay_ms(10);
 
                     cpl_bit(PORTB, PB7);
-                    data_array_s1[0] = SERVO_1;
                     data_array_s1[1] = mappedValue1;
                     eeprom_write_block(data_array_s1, (void *)lastAddress, sizeof(data_array_s1));
                     eeprom_busy_wait(); // espera até que todas as operações de gravação anteriores na EEPROM sejam concluídas antes de continuar a execução.                                          
@@ -228,15 +231,14 @@ int main() {
                     lastAddress += sizeof(data_array_s1); 
                 }
 
-                if( !tst_bit(PINC, buttonRecordPositionPin1) ) {
-                    while( !tst_bit(PINC, buttonRecordPositionPin1) );
+                if( !tst_bit(PINC, buttonRecordPositionPin2) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin2) );
                     _delay_ms(10);
 
                     cpl_bit(PORTB, PB7);
-                    data_array_s2[0] = SERVO_2;
                     data_array_s2[1] = mappedValue2;
                     eeprom_write_block(data_array_s2, (void *)lastAddress, sizeof(data_array_s2));
-                    eeprom_busy_wait(); // espera até que todas as operações de gravação anteriores na EEPROM sejam concluídas antes de continuar a execução.                                          
+                    eeprom_busy_wait(); 
                     
                     // limita em até 5 gravações
                     // 0, 4, 8, 12, 16, 20;
@@ -246,32 +248,175 @@ int main() {
                     // Calcula o próximo endereço disponível
                     lastAddress += sizeof(data_array_s2); 
                 }
+
+                if( !tst_bit(PINC, buttonRecordPositionPin3) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin2) );
+                    _delay_ms(10);
+
+                    cpl_bit(PORTB, PB7);
+                    data_array_s3[1] = mappedValue3;
+                    eeprom_write_block(data_array_s3, (void *)lastAddress, sizeof(data_array_s3));
+                    eeprom_busy_wait(); 
+                    
+                    // limita em até 5 gravações
+                    // 0, 4, 8, 12, 16, 20;
+                    if(lastAddress >= 16)
+                        lastAddress = 0;
+
+                    // Calcula o próximo endereço disponível
+                    lastAddress += sizeof(data_array_s3); 
+                }
                 
+                if( !tst_bit(PINC, buttonRecordPositionPin4) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin4) );
+                    _delay_ms(10);
+
+                    cpl_bit(PORTB, PB7);
+                    data_array_s4[1] = mappedValue4;
+                    eeprom_write_block(data_array_s4, (void *)lastAddress, sizeof(data_array_s4));
+                    eeprom_busy_wait(); 
+                    
+                    // limita em até 5 gravações
+                    // 0, 4, 8, 12, 16, 20;
+                    if(lastAddress >= 16)
+                        lastAddress = 0;
+
+                    // Calcula o próximo endereço disponível
+                    lastAddress += sizeof(data_array_s4); 
+                }
+
+                if( !tst_bit(PINC, buttonRecordPositionPin5) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin5) );
+                    _delay_ms(10);
+
+                    cpl_bit(PORTB, PB7);
+                    data_array_s5[1] = mappedValue5;
+                    eeprom_write_block(data_array_s5, (void *)lastAddress, sizeof(data_array_s5));
+                    eeprom_busy_wait(); 
+                    
+                    // limita em até 5 gravações
+                    // 0, 4, 8, 12, 16, 20;
+                    if(lastAddress >= 16)
+                        lastAddress = 0;
+
+                    // Calcula o próximo endereço disponível
+                    lastAddress += sizeof(data_array_s5); 
+                }
+
+                if( !tst_bit(PINC, buttonRecordPositionPin6) ) {
+                    while( !tst_bit(PINC, buttonRecordPositionPin6) );
+                    _delay_ms(10);
+
+                    cpl_bit(PORTB, PB7);
+                    data_array_s6[1] = mappedValue6;
+                    eeprom_write_block(data_array_s6, (void *)lastAddress, sizeof(data_array_s6));
+                    eeprom_busy_wait(); 
+                    
+                    // Calcula o próximo endereço disponível
+                    lastAddress += sizeof(data_array_s6); 
+
+                    // limita em até 5 gravações
+                    // 0, 4, 8, 12, 16, 20;
+                    if(lastAddress > 16)
+                        lastAddress = 0;
+                }
                 _delay_ms(50);
 
                 break;
             case 2:
                 eeprom_read_block(data_array_s, (const void *)lastAddress, sizeof(data_array_s));
-                set_servo_position(data_array_s[0], data_array_s[1]);    
+                //set_servo_position(data_array_s[0], data_array_s[1]);    
 
-                if( lastPosition1 > data_array_s[1] ) {
-                    for(uint16_t i = lastPosition1; i > data_array_s[1]; i -= 50) {
-                        set_servo_position(data_array_s[0], i);
-                        _delay_ms(50);
-                    }
-                } else {
-                    for(uint16_t i = lastPosition1; i < data_array_s[1]; i += 50) {
-                        set_servo_position(data_array_s[0], i);
-                        _delay_ms(50);
-                    }
-                }
+                switch(data_array_s[0]) {
+                    case 0: // SERVO_1
+                        if( currentPosition1 < data_array_s[1] ) {
+                            for(uint16_t i = currentPosition1; i < data_array_s[1]; i += 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        } else {
+                            for(uint16_t i = currentPosition1; i > data_array_s[1]; i -= 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        }
+                        currentPosition1 = OCR3A;
+                        break;
+                    case 1: // SERVO_2
+                        if( currentPosition2 < data_array_s[1] ) {
+                            for(uint16_t i = currentPosition2; i < data_array_s[1]; i += 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        } else {
+                            for(uint16_t i = currentPosition2; i > data_array_s[1]; i -= 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        }
+                        currentPosition2 = OCR3B;
+                        break;
+                    case 2:
+                        if( currentPosition3 < data_array_s[1] ) {
+                            for(uint16_t i = currentPosition3; i < data_array_s[1]; i += 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        } else {
+                            for(uint16_t i = currentPosition3; i > data_array_s[1]; i -= 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        }
+                        currentPosition3 = OCR4A;
+                        break;
+                    case 3:
+                        if( currentPosition4 < data_array_s[1] ) {
+                            for(uint16_t i = currentPosition4; i < data_array_s[1]; i += 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        } else {
+                            for(uint16_t i = currentPosition4; i > data_array_s[1]; i -= 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        }
+                        currentPosition4 = OCR4B;
+                        break;
+                    case 4:
+                        if( currentPosition5 < data_array_s[1] ) {
+                            for(uint16_t i = currentPosition5; i < data_array_s[1]; i += 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        } else {
+                            for(uint16_t i = currentPosition5; i > data_array_s[1]; i -= 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        }
+                        currentPosition5 = OCR5A;
+                        break;
+                    case 5:
+                        if( currentPosition6 < data_array_s[1] ) {
+                            for(uint16_t i = currentPosition6; i < data_array_s[1]; i += 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        } else {
+                            for(uint16_t i = currentPosition6; i > data_array_s[1]; i -= 50) {
+                                set_servo_position(data_array_s[0], i);
+                                _delay_ms(50);
+                            }
+                        }
+                        currentPosition6 = OCR5B;
+                        break;            
+                }                                            
                 
-                lastPosition1 = data_array_s[1];
-                
-                if(lastAddress >= 16) 
-                    lastAddress = 0;
-
                 lastAddress += sizeof(data_array_s);
+                if(lastAddress > 16) 
+                    lastAddress = 0;
                 break;
         }        
 
